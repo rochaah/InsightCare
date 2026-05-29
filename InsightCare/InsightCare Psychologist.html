@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>InsightCare — Psychologist Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --bg-warm: #FBF7F2;
+    --bg-card: #FFFFFF;
+    --ink: #2D2A3A;
+    --ink-soft: #6B6678;
+    --ink-mute: #9B96A6;
+
+    --lavender: #C8B8E8;
+    --lavender-deep: #8B73C7;
+    --lavender-soft: #EFE9FA;
+
+    --mint: #B8E8D0;
+    --mint-deep: #5FB089;
+    --mint-soft: #E8F7EF;
+
+    --peach: #F5C5A3;
+    --peach-deep: #D88E5A;
+    --peach-soft: #FBEBDB;
+
+    --alert: #E37A7A;
+    --alert-deep: #B84A4A;
+    --alert-soft: #FBE6E6;
+
+    --hair: rgba(45, 42, 58, 0.06);
+  }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Nunito', -apple-system, system-ui, sans-serif;
+    background: #ECE7DF;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+  }
+  * { box-sizing: border-box; }
+  button { font-family: inherit; }
+  input { font-family: inherit; }
+  .phone-scroll::-webkit-scrollbar { display: none; }
+  .phone-scroll { scrollbar-width: none; }
+
+  @keyframes pulseAlert {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(227, 122, 122, 0.45); }
+    50% { box-shadow: 0 0 0 8px rgba(227, 122, 122, 0); }
+  }
+  .alert-dot { animation: pulseAlert 2s ease-out infinite; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" data-presets="react">
+    const { useState, useMemo } = React;
+
+    /* ---------- Icons ---------- */
+    const Icon = ({ d, size = 24, stroke = 'currentColor', fill = 'none', sw = 2 }) => (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={stroke}
+           strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{d}</svg>
+    );
+    const HomeIcon = (p) => <Icon {...p} d={<>
+      <path d="M3 11.5 12 4l9 7.5" />
+      <path d="M5 10.5V20h14v-9.5" />
+      <path d="M10 20v-5h4v5" />
+    </>} />;
+    const PatientsIcon = (p) => <Icon {...p} d={<>
+      <circle cx="9" cy="8.5" r="3" />
+      <circle cx="16.5" cy="10" r="2.2" />
+      <path d="M3 19c0.8-3 3-4.5 6-4.5s5.2 1.5 6 4.5" />
+      <path d="M15 19c0.4-1.6 1.4-2.6 3-2.6s2.6 1 3 2.6" />
+    </>} />;
+    const BellIcon = (p) => <Icon {...p} d={<>
+      <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" />
+      <path d="M10 20a2 2 0 0 0 4 0" />
+    </>} />;
+    const ProfileIcon = (p) => <Icon {...p} d={<>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20c1-3.5 4-5 7-5s6 1.5 7 5" />
+    </>} />;
+    const SearchIcon = (p) => <Icon {...p} d={<>
+      <circle cx="11" cy="11" r="6" />
+      <path d="m20 20-3.5-3.5" />
+    </>} />;
+    const PlusIcon = (p) => <Icon {...p} d={<>
+      <path d="M12 5v14M5 12h14" />
+    </>} sw={2.6} />;
+    const ChevronRight = (p) => <Icon {...p} d={<path d="m9 6 6 6-6 6" />} />;
+    const FilterIcon = (p) => <Icon {...p} d={<>
+      <path d="M4 6h16M7 12h10M10 18h4" />
+    </>} />;
+    const AlertTriangle = (p) => <Icon {...p} d={<>
+      <path d="M12 4 3 19h18L12 4Z" />
+      <path d="M12 10v4M12 17v.5" />
+    </>} sw={2.2} />;
+    const MessageIcon = (p) => <Icon {...p} d={<>
+      <path d="M4 6h16v10H8l-4 4V6Z" />
+    </>} />;
+
+    /* ---------- Sparkline ---------- */
+    function Sparkline({ values, color, width = 110, height = 36 }) {
+      const P = 3;
+      const min = Math.min(...values), max = Math.max(...values);
+      const range = Math.max(0.0001, max - min);
+      const stepX = (width - P * 2) / (values.length - 1);
+      const pts = values.map((v, i) => ({
+        x: P + i * stepX,
+        y: P + (1 - (v - min) / range) * (height - P * 2),
+      }));
+      // smooth bezier
+      let d = `M ${pts[0].x} ${pts[0].y}`;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1];
+        const cx = a.x + (b.x - a.x) / 2;
+        d += ` C ${cx} ${a.y}, ${cx} ${b.y}, ${b.x} ${b.y}`;
+      }
+      const area = `${d} L ${pts[pts.length-1].x} ${height - P/2} L ${pts[0].x} ${height - P/2} Z`;
+      const last = pts[pts.length - 1];
+      const id = useMemo(() => 'g' + Math.random().toString(36).slice(2, 8), []);
+      return (
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          <defs>
+            <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={color} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={area} fill={`url(#${id})`} />
+          <path d={d} stroke={color} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx={last.x} cy={last.y} r="2.5" fill="#fff" stroke={color} strokeWidth="2" />
+        </svg>
+      );
+    }
+
+    /* ---------- Mood badge ---------- */
+    function MoodBadge({ status }) {
+      const map = {
+        stable:    { label: 'Stable',    bg: 'var(--mint-soft)',    fg: 'var(--mint-deep)',    dot: '#5FB089' },
+        attention: { label: 'Attention', bg: 'var(--peach-soft)',   fg: 'var(--peach-deep)',   dot: '#D88E5A' },
+        alert:     { label: 'Alert',     bg: 'var(--alert-soft)',   fg: 'var(--alert-deep)',   dot: '#E37A7A' },
+      };
+      const s = map[status];
+      return (
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 6,
+          background: s.bg, color: s.fg,
+          padding: '4px 10px 4px 8px', borderRadius: 999,
+          fontSize: 11.5, fontWeight: 800, letterSpacing: 0.1,
+        }}>
+          <span className={status === 'alert' ? 'alert-dot' : ''} style={{
+            width: 7, height: 7, borderRadius: 999, background: s.dot, display: 'inline-block',
+          }} />
+          {s.label}
+        </div>
+      );
+    }
+
+    /* ---------- Patient avatar (initials) ---------- */
+    function Avatar({ initials, hue, size = 48, ring }) {
+      return (
+        <div style={{
+          width: size, height: size, borderRadius: 16,
+          background: hue, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 800, fontSize: size * 0.36,
+          flexShrink: 0, position: 'relative',
+          boxShadow: ring ? `0 0 0 3px #fff, 0 0 0 5px ${ring}` : 'none',
+        }}>{initials}</div>
+      );
+    }
+
+    /* ---------- Patient card ---------- */
+    function PatientCard({ p }) {
+      const isAlert = p.status === 'alert';
+      const colors = {
+        stable: '#5FB089',
+        attention: '#D88E5A',
+        alert: '#E37A7A',
+      };
+      return (
+        <button style={{
+          width: '100%', textAlign: 'left', cursor: 'pointer',
+          background: isAlert
+            ? 'linear-gradient(180deg, #FFF5F5 0%, #FFFFFF 60%)'
+            : 'var(--bg-card)',
+          border: isAlert ? '1.5px solid rgba(227,122,122,0.35)' : '1px solid var(--hair)',
+          borderRadius: 20,
+          padding: 12,
+          boxShadow: isAlert
+            ? '0 8px 22px rgba(227,122,122,0.18)'
+            : '0 4px 14px rgba(70, 60, 100, 0.05)',
+          display: 'flex', flexDirection: 'column', gap: 10,
+          transition: 'transform .15s ease',
+        }}
+        onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.99)'}
+        onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          {/* Top row: avatar + name/meta + badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Avatar initials={p.initials} hue={p.hue} ring={isAlert ? '#E37A7A' : undefined} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 15.5, fontWeight: 800, color: 'var(--ink)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{p.name}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 2 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-mute)' }}>
+                  Last check-in · {p.lastCheckin}
+                </div>
+                {p.unread > 0 && (
+                  <div style={{
+                    background: 'var(--lavender-soft)', color: 'var(--lavender-deep)',
+                    fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 999,
+                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                  }}>
+                    <MessageIcon size={10} stroke="currentColor" sw={2.4} />
+                    {p.unread}
+                  </div>
+                )}
+              </div>
+            </div>
+            <MoodBadge status={p.status} />
+          </div>
+
+          {/* Sparkline row */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: isAlert ? 'rgba(255,255,255,0.6)' : 'var(--bg-warm)',
+            borderRadius: 14, padding: '8px 12px',
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: 0.6, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>
+                7-day mood
+              </div>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--ink)', marginTop: 1 }}>
+                {p.trend}
+              </div>
+            </div>
+            <Sparkline values={p.spark} color={colors[p.status]} />
+          </div>
+
+          {/* Alert callout */}
+          {isAlert && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: 'var(--alert-soft)',
+              color: 'var(--alert-deep)',
+              padding: '10px 12px', borderRadius: 14,
+              fontSize: 12.5, fontWeight: 700,
+            }}>
+              <AlertTriangle size={16} stroke="currentColor" />
+              <span style={{ flex: 1 }}>3 consecutive negative days</span>
+              <span style={{ fontSize: 11, fontWeight: 800, opacity: 0.9 }}>Review →</span>
+            </div>
+          )}
+        </button>
+      );
+    }
+
+    /* ---------- Bottom Nav ---------- */
+    function BottomNav({ active, setActive }) {
+      const tabs = [
+        { id: 'home', label: 'Home', Ic: HomeIcon },
+        { id: 'patients', label: 'Patients', Ic: PatientsIcon },
+        { id: 'notifications', label: 'Notifications', Ic: BellIcon, badge: 4 },
+        { id: 'profile', label: 'Profile', Ic: ProfileIcon },
+      ];
+      return (
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0,
+          paddingBottom: 28, zIndex: 10,
+          background: 'rgba(255,255,255,0.92)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid var(--hair)',
+          display: 'flex', justifyContent: 'space-around',
+          paddingTop: 10,
+        }}>
+          {tabs.map(({ id, label, Ic, badge }) => {
+            const isActive = active === id;
+            return (
+              <button key={id} onClick={() => setActive(id)} style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                padding: '4px 10px',
+                color: isActive ? 'var(--lavender-deep)' : 'var(--ink-mute)',
+              }}>
+                <div style={{
+                  width: 44, height: 30, borderRadius: 999,
+                  background: isActive ? 'var(--lavender-soft)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  position: 'relative',
+                }}>
+                  <Ic size={22} stroke="currentColor" sw={isActive ? 2.4 : 2} />
+                  {badge > 0 && (
+                    <div style={{
+                      position: 'absolute', top: -1, right: 4,
+                      minWidth: 16, height: 16, borderRadius: 999,
+                      background: 'var(--alert)', color: '#fff',
+                      fontSize: 9.5, fontWeight: 800,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      padding: '0 4px',
+                      border: '2px solid #fff',
+                    }}>{badge}</div>
+                  )}
+                </div>
+                <div style={{ fontSize: 10, fontWeight: isActive ? 800 : 700 }}>{label}</div>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    /* ---------- Screen ---------- */
+    function PsychDashboard() {
+      const [active, setActive] = useState('patients');
+      const [query, setQuery] = useState('');
+      const [filter, setFilter] = useState('all'); // all | alert | attention | stable
+
+      const all = [
+        {
+          id: 1, name: 'Marina Costa', initials: 'MC', hue: 'linear-gradient(135deg,#E37A7A,#D88E5A)',
+          lastCheckin: 'Today, 8:12am', status: 'alert',
+          spark: [3.4, 3.0, 2.6, 2.2, 1.9, 1.7, 1.5],
+          trend: 'Down 32% vs last week',
+          unread: 2, alertNote: '3 consecutive negative days',
+        },
+        {
+          id: 2, name: 'James Okafor', initials: 'JO', hue: 'linear-gradient(135deg,#D88E5A,#F5C5A3)',
+          lastCheckin: 'Yesterday, 9:40pm', status: 'attention',
+          spark: [3.6, 3.4, 3.2, 3.5, 3.1, 2.9, 3.0],
+          trend: 'Slight dip mid-week',
+          unread: 1,
+        },
+        {
+          id: 3, name: 'Sarah Lindgren', initials: 'SL', hue: 'linear-gradient(135deg,#8B73C7,#C8B8E8)',
+          lastCheckin: 'Today, 7:55am', status: 'stable',
+          spark: [3.2, 3.4, 3.3, 3.6, 3.8, 4.1, 4.2],
+          trend: 'Up 18% — steady progress',
+          unread: 0,
+        },
+      ];
+
+      const filtered = all.filter(p => {
+        if (filter !== 'all' && p.status !== filter) return false;
+        if (!query) return true;
+        return p.name.toLowerCase().includes(query.toLowerCase());
+      });
+
+      const counts = {
+        all: all.length,
+        alert: all.filter(p => p.status === 'alert').length,
+        attention: all.filter(p => p.status === 'attention').length,
+        stable: all.filter(p => p.status === 'stable').length,
+      };
+
+      const chips = [
+        { id: 'all', label: 'All', color: 'var(--ink)' },
+        { id: 'alert', label: 'Alert', color: 'var(--alert-deep)' },
+        { id: 'attention', label: 'Attention', color: 'var(--peach-deep)' },
+        { id: 'stable', label: 'Stable', color: 'var(--mint-deep)' },
+      ];
+
+      return (
+        <div style={{
+          width: '100%', height: '100%',
+          background: 'var(--bg-warm)',
+          position: 'relative', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          {/* soft glows */}
+          <div style={{
+            position: 'absolute', top: -100, right: -80, width: 260, height: 260, borderRadius: '50%',
+            background: 'radial-gradient(closest-side, rgba(200,184,232,0.4), rgba(200,184,232,0))',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', top: 200, left: -120, width: 240, height: 240, borderRadius: '50%',
+            background: 'radial-gradient(closest-side, rgba(184,232,208,0.35), rgba(184,232,208,0))',
+            pointerEvents: 'none',
+          }} />
+
+          <div className="phone-scroll" style={{
+            flex: 1, overflowY: 'auto', position: 'relative', zIndex: 1,
+            padding: '54px 20px 180px',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-mute)', letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                  Tuesday · May 27
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--ink)', marginTop: 2, lineHeight: 1.15 }}>
+                  Dr. Ana Ribeiro
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-soft)', marginTop: 2 }}>
+                  CRP 06/142.857 · Clinical Psychology
+                </div>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 18,
+                  background: 'linear-gradient(135deg,#8B73C7 0%, #C8B8E8 60%, #F5C5A3 130%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 18, fontWeight: 800, color: '#fff',
+                  boxShadow: '0 6px 16px rgba(139,115,199,0.4)',
+                }}>AR</div>
+                <div style={{
+                  position: 'absolute', bottom: -2, right: -2,
+                  width: 16, height: 16, borderRadius: 999,
+                  background: 'var(--mint-deep)', border: '3px solid var(--bg-warm)',
+                }} />
+              </div>
+            </div>
+
+            {/* Quick stats strip */}
+            <div style={{
+              marginTop: 14,
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
+              gap: 8,
+            }}>
+              {[
+                { v: 12, l: 'Active patients', c: 'var(--ink)' },
+                { v: 1, l: 'Need attention', c: 'var(--peach-deep)' },
+                { v: 1, l: 'Alert', c: 'var(--alert-deep)' },
+              ].map((s, i) => (
+                <div key={i} style={{
+                  background: 'var(--bg-card)',
+                  borderRadius: 14,
+                  padding: '8px 12px',
+                  border: '1px solid var(--hair)',
+                }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: s.c, lineHeight: 1 }}>{s.v}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ink-mute)', marginTop: 3, letterSpacing: 0.2 }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Search bar */}
+            <div style={{
+              marginTop: 12,
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <div style={{
+                flex: 1,
+                background: 'var(--bg-card)',
+                borderRadius: 14,
+                padding: '9px 14px',
+                display: 'flex', alignItems: 'center', gap: 10,
+                border: '1px solid var(--hair)',
+                boxShadow: '0 2px 8px rgba(70,60,100,0.04)',
+              }}>
+                <SearchIcon size={18} stroke="var(--ink-mute)" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search patients"
+                  style={{
+                    flex: 1, border: 'none', outline: 'none',
+                    background: 'transparent',
+                    fontSize: 14, fontWeight: 600, color: 'var(--ink)',
+                  }}
+                />
+              </div>
+              <button style={{
+                width: 44, height: 44, borderRadius: 14,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--hair)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--ink-soft)',
+              }}>
+                <FilterIcon size={20} stroke="currentColor" />
+              </button>
+            </div>
+
+            {/* Filter chips */}
+            <div style={{
+              marginTop: 10,
+              display: 'flex', gap: 8, overflowX: 'auto',
+              paddingBottom: 4,
+            }} className="phone-scroll">
+              {chips.map(c => {
+                const isActive = filter === c.id;
+                return (
+                  <button key={c.id} onClick={() => setFilter(c.id)} style={{
+                    background: isActive ? c.color : 'var(--bg-card)',
+                    color: isActive ? '#fff' : c.color,
+                    border: isActive ? 'none' : '1px solid var(--hair)',
+                    padding: '7px 14px', borderRadius: 999,
+                    fontSize: 12.5, fontWeight: 800,
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    {c.label}
+                    <span style={{
+                      background: isActive ? 'rgba(255,255,255,0.25)' : 'var(--bg-warm)',
+                      padding: '1px 7px', borderRadius: 999, fontSize: 10.5,
+                    }}>{counts[c.id]}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Section header */}
+            <div style={{
+              marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              padding: '0 4px',
+            }}>
+              <div style={{ fontSize: 11, letterSpacing: 0.8, fontWeight: 700, color: 'var(--ink-mute)', textTransform: 'uppercase' }}>
+                Your patients
+              </div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--ink-mute)' }}>
+                Sorted by priority
+              </div>
+            </div>
+
+            {/* Patient cards */}
+            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {filtered.map(p => <PatientCard key={p.id} p={p} />)}
+              {filtered.length === 0 && (
+                <div style={{
+                  background: 'var(--bg-card)', borderRadius: 20, padding: 24,
+                  textAlign: 'center', color: 'var(--ink-mute)', fontSize: 13, fontWeight: 700,
+                }}>
+                  No patients match this filter
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* FAB */}
+          <button style={{
+            position: 'absolute', right: 20, bottom: 110,
+            width: 60, height: 60, borderRadius: 22,
+            border: 'none', cursor: 'pointer',
+            background: 'linear-gradient(135deg, #8B73C7 0%, #A78BD9 60%, #D88E5A 130%)',
+            color: '#fff',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 12px 28px rgba(139,115,199,0.45), 0 4px 10px rgba(139,115,199,0.25)',
+            zIndex: 11,
+            transition: 'transform .15s ease',
+          }}
+          onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.94)'}
+          onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          title="Add patient via link code"
+          >
+            <PlusIcon size={26} stroke="#fff" />
+          </button>
+
+          <BottomNav active={active} setActive={setActive} />
+        </div>
+      );
+    }
+
+    /* ---------- App ---------- */
+    function App() {
+      return (
+        <IOSDevice width={402} height={874}>
+          <PsychDashboard />
+        </IOSDevice>
+      );
+    }
+
+    const wait = () => {
+      if (!window.IOSDevice) return setTimeout(wait, 30);
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    };
+    wait();
+  </script>
+</body>
+</html>
